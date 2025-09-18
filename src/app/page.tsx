@@ -11,7 +11,7 @@ export default function Home() {
           Platform deteksi berbasis AI untuk hewan, tumbuhan, sejarah, dan analisis teks
         </p>
         
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 max-w-6xl mx-auto">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 max-w-6xl mx-auto">
           <Link href="/deteksi-hewan" className="group">
             <div className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
               <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-3 mx-auto">
@@ -88,6 +88,22 @@ export default function Home() {
               </h3>
               <p className="text-gray-600 text-center text-sm">
                 Masukkan kalimat untuk menganalisis apakah berupa argumen atau fakta
+              </p>
+            </div>
+          </Link>
+
+          <Link href="/deteksi-negara" className="group">
+            <div className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-3 mx-auto">
+                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-center text-gray-800 mb-2">
+                Pencarian Negara
+              </h3>
+              <p className="text-gray-600 text-center text-sm">
+                Cari informasi lengkap negara dunia dengan bendera, geografi, dan sejarah
               </p>
             </div>
           </Link>
