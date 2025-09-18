@@ -75,9 +75,9 @@ Jawab dengan singkat dan informatif tanpa menggunakan format markdown atau simbo
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-100 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-100 p-4">
       <div className="max-w-4xl mx-auto">
-        <div className="mb-8">
+        <div className="mb-4">
           <Link 
             href="/" 
             className="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors duration-200"

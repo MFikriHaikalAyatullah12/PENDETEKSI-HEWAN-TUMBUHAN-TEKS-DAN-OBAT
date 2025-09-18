@@ -9,6 +9,7 @@ export default function DeteksiTeks() {
   const [result, setResult] = useState<string>("");
   const [analysisType, setAnalysisType] = useState<string>("sentiment");
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [loadingMessage, setLoadingMessage] = useState<string>("Menganalisis...");
 
   const handleTextAnalysis = async () => {
     if (!inputText.trim()) {
@@ -17,6 +18,7 @@ export default function DeteksiTeks() {
     }
 
     setIsLoading(true);
+    setLoadingMessage("Menganalisis...");
     
     try {
       const result = await analyzeTextWithAI(
@@ -24,11 +26,18 @@ export default function DeteksiTeks() {
         analysisType as 'sentiment' | 'language' | 'keywords' | 'factargument'
       );
       setResult(result);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error:', error);
-      setResult("Maaf, terjadi kesalahan saat menganalisis teks. Silakan coba lagi.");
+      if (error.message?.includes('sibuk') || error.message?.includes('overloaded')) {
+        setResult("⚠️ Server Google AI sedang sibuk. Silakan coba lagi dalam beberapa menit.\n\nTips: Coba lagi setelah 2-3 menit untuk hasil terbaik.");
+      } else if (error.message?.includes('permintaan')) {
+        setResult("⏱️ Terlalu banyak permintaan. Silakan tunggu sebentar dan coba lagi.\n\nTips: Tunggu 1-2 menit sebelum mencoba lagi.");
+      } else {
+        setResult("❌ Maaf, terjadi kesalahan saat menganalisis teks. Silakan periksa koneksi internet dan coba lagi.");
+      }
     } finally {
       setIsLoading(false);
+      setLoadingMessage("Menganalisis...");
     }
   };
 
@@ -36,6 +45,7 @@ export default function DeteksiTeks() {
     setInputText("");
     setResult("");
     setIsLoading(false);
+    setLoadingMessage("Menganalisis...");
   };
 
   return (
@@ -108,7 +118,7 @@ export default function DeteksiTeks() {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Menganalisis...
+                    {loadingMessage}
                   </div>
                 ) : (
                   "Analisis Teks"

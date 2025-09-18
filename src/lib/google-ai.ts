@@ -9,20 +9,50 @@ export async function analyzeImageWithAI(
   imageBase64: string,
   prompt: string
 ): Promise<string> {
-  try {
-    const imagePart = {
-      inlineData: {
-        data: imageBase64,
-        mimeType: "image/jpeg"
-      }
-    };
+  const maxRetries = 3;
+  let lastError;
 
-    const result = await model.generateContent([prompt, imagePart]);
-    const response = await result.response;
-    return response.text();
-  } catch (error) {
-    console.error('Error analyzing image:', error);
-    throw new Error('Gagal menganalisis gambar. Silakan coba lagi.');
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const imagePart = {
+        inlineData: {
+          data: imageBase64,
+          mimeType: "image/jpeg"
+        }
+      };
+
+      const result = await model.generateContent([prompt, imagePart]);
+      const response = await result.response;
+      return response.text();
+    } catch (error: any) {
+      lastError = error;
+      console.error(`Attempt ${attempt} failed:`, error);
+      
+      // Jika model overloaded (503) atau rate limit (429), coba lagi setelah delay
+      if (error.message?.includes('overloaded') || error.message?.includes('503') || 
+          error.message?.includes('429') || error.message?.includes('rate limit')) {
+        if (attempt < maxRetries) {
+          const delay = attempt * 2000; // 2s, 4s, 6s
+          console.log(`Model overloaded, menunggu ${delay/1000} detik sebelum mencoba lagi...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+      }
+      
+      // Jika bukan error yang bisa di-retry, langsung throw
+      if (attempt === maxRetries) {
+        break;
+      }
+    }
+  }
+
+  // Jika semua attempt gagal
+  if (lastError?.message?.includes('overloaded') || lastError?.message?.includes('503')) {
+    throw new Error('Server Google AI sedang sibuk. Silakan coba lagi dalam beberapa menit.');
+  } else if (lastError?.message?.includes('429')) {
+    throw new Error('Terlalu banyak permintaan. Silakan tunggu sebentar dan coba lagi.');
+  } else {
+    throw new Error('Gagal menganalisis gambar. Silakan periksa koneksi internet dan coba lagi.');
   }
 }
 
@@ -30,12 +60,16 @@ export async function analyzeTextWithAI(
   text: string,
   analysisType: 'sentiment' | 'language' | 'keywords' | 'factargument'
 ): Promise<string> {
-  try {
-    let prompt = '';
-    
-    switch (analysisType) {
-      case 'sentiment':
-        prompt = `Analisis sentimen teks ini dengan format bersih:
+  const maxRetries = 3;
+  let lastError;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      let prompt = '';
+      
+      switch (analysisType) {
+        case 'sentiment':
+          prompt = `Analisis sentimen teks ini dengan format bersih:
 
 😊 SENTIMEN: [POSITIF/NEGATIF/NETRAL]
 
@@ -52,10 +86,10 @@ Kepercayaan: [XX]%
 Teks: "${text}"
 
 Jawab tanpa menggunakan format markdown atau simbol bintang.`;
-        break;
-        
-      case 'language':
-        prompt = `Deteksi bahasa teks ini dengan format bersih:
+          break;
+          
+        case 'language':
+          prompt = `Deteksi bahasa teks ini dengan format bersih:
 
 🌍 BAHASA: [Nama Bahasa]
 
@@ -70,10 +104,10 @@ CIRI KHAS:
 Teks: "${text}"
 
 Jawab tanpa menggunakan format markdown atau simbol bintang.`;
-        break;
-        
-      case 'keywords':
-        prompt = `Ekstrak kata kunci dari teks ini dengan format bersih:
+          break;
+          
+        case 'keywords':
+          prompt = `Ekstrak kata kunci dari teks ini dengan format bersih:
 
 🔑 KATA KUNCI UTAMA:
 1. [kata 1] - [relevansi]
@@ -88,10 +122,10 @@ KATEGORI: [kategori/bidang teks]
 Teks: "${text}"
 
 Jawab tanpa menggunakan format markdown atau simbol bintang.`;
-        break;
-        
-      case 'factargument':
-        prompt = `Analisis teks ini untuk menentukan apakah berupa fakta atau argumen:
+          break;
+          
+        case 'factargument':
+          prompt = `Analisis teks ini untuk menentukan apakah berupa fakta atau argumen:
 
 📊 JENIS: [FAKTA / ARGUMEN / CAMPURAN]
 
@@ -111,15 +145,41 @@ KEPERCAYAAN: [XX]%
 Teks: "${text}"
 
 Jawab tanpa menggunakan format markdown atau simbol bintang.`;
-        break;
-    }
+          break;
+      }
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    return response.text();
-  } catch (error) {
-    console.error('Error analyzing text:', error);
-    throw new Error('Gagal menganalisis teks. Silakan coba lagi.');
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      return response.text();
+    } catch (error: any) {
+      lastError = error;
+      console.error(`Attempt ${attempt} failed:`, error);
+      
+      // Jika model overloaded (503) atau rate limit (429), coba lagi setelah delay
+      if (error.message?.includes('overloaded') || error.message?.includes('503') || 
+          error.message?.includes('429') || error.message?.includes('rate limit')) {
+        if (attempt < maxRetries) {
+          const delay = attempt * 2000; // 2s, 4s, 6s
+          console.log(`Model overloaded, menunggu ${delay/1000} detik sebelum mencoba lagi...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+      }
+      
+      // Jika bukan error yang bisa di-retry, langsung throw
+      if (attempt === maxRetries) {
+        break;
+      }
+    }
+  }
+
+  // Jika semua attempt gagal
+  if (lastError?.message?.includes('overloaded') || lastError?.message?.includes('503')) {
+    throw new Error('Server Google AI sedang sibuk. Silakan coba lagi dalam beberapa menit.');
+  } else if (lastError?.message?.includes('429')) {
+    throw new Error('Terlalu banyak permintaan. Silakan tunggu sebentar dan coba lagi.');
+  } else {
+    throw new Error('Gagal menganalisis teks. Silakan periksa koneksi internet dan coba lagi.');
   }
 }
 
