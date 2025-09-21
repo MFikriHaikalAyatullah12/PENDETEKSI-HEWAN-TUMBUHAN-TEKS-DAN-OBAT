@@ -21,10 +21,12 @@ export async function POST(request: NextRequest) {
     const text = response.text();
 
     return NextResponse.json({ result: text });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error in text search:', error);
     
-    if (error.message?.includes('overloaded') || error.message?.includes('503')) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    
+    if (errorMessage.includes('overloaded') || errorMessage.includes('503')) {
       return NextResponse.json(
         { error: 'Server Google AI sedang sibuk. Silakan coba lagi dalam beberapa menit.' },
         { status: 503 }

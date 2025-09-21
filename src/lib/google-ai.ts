@@ -1,5 +1,17 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
+// Interface untuk error handling
+interface APIError {
+  message?: string;
+  status?: number;
+  code?: string;
+}
+
+// Type guard untuk mengecek apakah error adalah APIError
+function isAPIError(error: unknown): error is APIError {
+  return typeof error === 'object' && error !== null && 'message' in error;
+}
+
 const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_AI_API_KEY!;
 const genAI = new GoogleGenerativeAI(API_KEY);
 
@@ -10,7 +22,7 @@ export async function analyzeImageWithAI(
   prompt: string
 ): Promise<string> {
   const maxRetries = 3;
-  let lastError;
+  let lastError: unknown;
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
@@ -24,18 +36,21 @@ export async function analyzeImageWithAI(
       const result = await model.generateContent([prompt, imagePart]);
       const response = await result.response;
       return response.text();
-    } catch (error: any) {
+    } catch (error: unknown) {
       lastError = error;
       console.error(`Attempt ${attempt} failed:`, error);
       
-      // Jika model overloaded (503) atau rate limit (429), coba lagi setelah delay
-      if (error.message?.includes('overloaded') || error.message?.includes('503') || 
-          error.message?.includes('429') || error.message?.includes('rate limit')) {
-        if (attempt < maxRetries) {
-          const delay = attempt * 2000; // 2s, 4s, 6s
-          console.log(`Model overloaded, menunggu ${delay/1000} detik sebelum mencoba lagi...`);
-          await new Promise(resolve => setTimeout(resolve, delay));
-          continue;
+      // Type guard untuk mengecek apakah error memiliki message
+      if (isAPIError(error)) {
+        // Jika model overloaded (503) atau rate limit (429), coba lagi setelah delay
+        if (error.message?.includes('overloaded') || error.message?.includes('503') || 
+            error.message?.includes('429') || error.message?.includes('rate limit')) {
+          if (attempt < maxRetries) {
+            const delay = attempt * 2000; // 2s, 4s, 6s
+            console.log(`Model overloaded, menunggu ${delay/1000} detik sebelum mencoba lagi...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            continue;
+          }
         }
       }
       
@@ -47,13 +62,15 @@ export async function analyzeImageWithAI(
   }
 
   // Jika semua attempt gagal
-  if (lastError?.message?.includes('overloaded') || lastError?.message?.includes('503')) {
-    throw new Error('Server Google AI sedang sibuk. Silakan coba lagi dalam beberapa menit.');
-  } else if (lastError?.message?.includes('429')) {
-    throw new Error('Terlalu banyak permintaan. Silakan tunggu sebentar dan coba lagi.');
-  } else {
-    throw new Error('Gagal menganalisis gambar. Silakan periksa koneksi internet dan coba lagi.');
+  if (isAPIError(lastError)) {
+    if (lastError.message?.includes('overloaded') || lastError.message?.includes('503')) {
+      throw new Error('Server Google AI sedang sibuk. Silakan coba lagi dalam beberapa menit.');
+    } else if (lastError.message?.includes('429')) {
+      throw new Error('Terlalu banyak permintaan. Silakan tunggu sebentar dan coba lagi.');
+    }
   }
+  
+  throw new Error('Gagal menganalisis gambar. Silakan periksa koneksi internet dan coba lagi.');
 }
 
 export async function analyzeTextWithAI(
@@ -61,7 +78,7 @@ export async function analyzeTextWithAI(
   analysisType: 'sentiment' | 'language' | 'keywords' | 'factargument'
 ): Promise<string> {
   const maxRetries = 3;
-  let lastError;
+  let lastError: unknown;
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
@@ -151,18 +168,21 @@ Jawab tanpa menggunakan format markdown atau simbol bintang.`;
       const result = await model.generateContent(prompt);
       const response = await result.response;
       return response.text();
-    } catch (error: any) {
+    } catch (error: unknown) {
       lastError = error;
       console.error(`Attempt ${attempt} failed:`, error);
       
-      // Jika model overloaded (503) atau rate limit (429), coba lagi setelah delay
-      if (error.message?.includes('overloaded') || error.message?.includes('503') || 
-          error.message?.includes('429') || error.message?.includes('rate limit')) {
-        if (attempt < maxRetries) {
-          const delay = attempt * 2000; // 2s, 4s, 6s
-          console.log(`Model overloaded, menunggu ${delay/1000} detik sebelum mencoba lagi...`);
-          await new Promise(resolve => setTimeout(resolve, delay));
-          continue;
+      // Type guard untuk mengecek apakah error memiliki message
+      if (isAPIError(error)) {
+        // Jika model overloaded (503) atau rate limit (429), coba lagi setelah delay
+        if (error.message?.includes('overloaded') || error.message?.includes('503') || 
+            error.message?.includes('429') || error.message?.includes('rate limit')) {
+          if (attempt < maxRetries) {
+            const delay = attempt * 2000; // 2s, 4s, 6s
+            console.log(`Model overloaded, menunggu ${delay/1000} detik sebelum mencoba lagi...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            continue;
+          }
         }
       }
       
@@ -174,13 +194,15 @@ Jawab tanpa menggunakan format markdown atau simbol bintang.`;
   }
 
   // Jika semua attempt gagal
-  if (lastError?.message?.includes('overloaded') || lastError?.message?.includes('503')) {
-    throw new Error('Server Google AI sedang sibuk. Silakan coba lagi dalam beberapa menit.');
-  } else if (lastError?.message?.includes('429')) {
-    throw new Error('Terlalu banyak permintaan. Silakan tunggu sebentar dan coba lagi.');
-  } else {
-    throw new Error('Gagal menganalisis teks. Silakan periksa koneksi internet dan coba lagi.');
+  if (isAPIError(lastError)) {
+    if (lastError.message?.includes('overloaded') || lastError.message?.includes('503')) {
+      throw new Error('Server Google AI sedang sibuk. Silakan coba lagi dalam beberapa menit.');
+    } else if (lastError.message?.includes('429')) {
+      throw new Error('Terlalu banyak permintaan. Silakan tunggu sebentar dan coba lagi.');
+    }
   }
+  
+  throw new Error('Gagal menganalisis teks. Silakan periksa koneksi internet dan coba lagi.');
 }
 
 export function convertImageToBase64(file: File): Promise<string> {

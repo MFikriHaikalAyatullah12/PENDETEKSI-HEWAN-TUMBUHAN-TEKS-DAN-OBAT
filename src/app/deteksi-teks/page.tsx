@@ -26,11 +26,13 @@ export default function DeteksiTeks() {
         analysisType as 'sentiment' | 'language' | 'keywords' | 'factargument'
       );
       setResult(result);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error:', error);
-      if (error.message?.includes('sibuk') || error.message?.includes('overloaded')) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
+      if (errorMessage.includes('sibuk') || errorMessage.includes('overloaded')) {
         setResult("⚠️ Server Google AI sedang sibuk. Silakan coba lagi dalam beberapa menit.\n\nTips: Coba lagi setelah 2-3 menit untuk hasil terbaik.");
-      } else if (error.message?.includes('permintaan')) {
+      } else if (errorMessage.includes('permintaan')) {
         setResult("⏱️ Terlalu banyak permintaan. Silakan tunggu sebentar dan coba lagi.\n\nTips: Tunggu 1-2 menit sebelum mencoba lagi.");
       } else {
         setResult("❌ Maaf, terjadi kesalahan saat menganalisis teks. Silakan periksa koneksi internet dan coba lagi.");
